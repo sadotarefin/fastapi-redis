@@ -3,7 +3,19 @@ import redis
 
 app = FastAPI()
 
-redis_client = redis.Redis(host='localhost', port=6379, db=0)
+from redis import ConnectionPool, Redis
+
+POOL_SIZE = 50 #recommended for small setup
+TIMEOUT_SECONDS = .05 #recommended 10 times than redis response time.    
+
+pool = ConnectionPool(
+    host='localhost',
+    port=6379,
+    db=0,
+    max_connections=POOL_SIZE,
+    socket_timeout=TIMEOUT_SECONDS
+)
+redis_client = Redis(connection_pool=pool)
 
 @app.get("/items/{item_id}")
 async def read_item(item_id: int):
