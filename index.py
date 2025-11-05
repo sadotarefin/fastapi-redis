@@ -10,7 +10,7 @@ async def read_item(item_id: int):
     try:
         cached_item = redis_client.get(f"item_{item_id}")
         if cached_item:
-            return {"item_id": item_id, "item": cached_item}
+            return {"item_id": item_id, "cached": True, "data": cached_item} 
     except Exception as e:
         print("Exception happened while loading data from cache {e}")
         pass
@@ -20,4 +20,4 @@ async def read_item(item_id: int):
     except Exception as e:
         print("Exception happened while writing data to cache {e}")
         pass
-    return {"item_id": item_id, "item": item}
+    return {"item_id": item_id, "cached": False, "data": item} 
