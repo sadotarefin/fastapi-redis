@@ -17,19 +17,31 @@ pool = ConnectionPool(
 )
 redis_client = Redis(connection_pool=pool)
 
-@app.get("/items/{item_id}")
-async def read_item(item_id: int):
+def get_redis_data(key: str):
     try:
-        cached_item = redis_client.get(f"item_{item_id}")
+        cached_item = redis_client.get(key)
         if cached_item:
-            return {"item_id": item_id, "cached": True, "data": cached_item} 
+            return cached_item
     except Exception as e:
-        print("Exception happened while loading data from cache {e}")
-        pass
-    item = str.format("This is a item description with item id {}", item_id)
+        print("Exception happend while loading data from cache {e}")
+    return None
+
+def set_redis_data(key: str, data: str, expire_seconds: int = 3600):
     try:
-        redis_client.set(f"item_{item_id}", item)
+        redis_client.set(key, data, ex=expire_seconds)
     except Exception as e:
         print("Exception happened while writing data to cache {e}")
-        pass
+
+@app.get("/items/{item_id}")
+async def read_item(item_id: int):
+    key = f"item_{item_id}"
+    cached_item = get_redis_data(key)
+    
+    if cached_item:
+        return {"item_id": item_id, "cached": True, "data": cached_item} 
+    
+    item = str.format("This is a item description with item id {}", item_id)
+    
+    set_redis_data(key, item) #save data to redis (if redis is available)
+    
     return {"item_id": item_id, "cached": False, "data": item} 
