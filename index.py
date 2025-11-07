@@ -32,6 +32,16 @@ def set_redis_data(key: str, data: str, expire_seconds: int = 3600):
     except Exception as e:
         print("Exception happened while writing data to cache {e}")
 
+def read_through_from_redis(item_id: int):
+    key = f"item_{item_id}"
+    cached_item = get_redis_data(key)
+    if cached_item:
+        return cached_item
+    item = str.format("This is a item description with item id {}", item_id)
+    set_redis_data(key, item)
+    return item
+    
+
 @app.get("/items/{item_id}")
 async def read_item(item_id: int):
     key = f"item_{item_id}"
@@ -44,4 +54,9 @@ async def read_item(item_id: int):
     
     set_redis_data(key, item) #save data to redis (if redis is available)
     
-    return {"item_id": item_id, "cached": False, "data": item} 
+    return {"item_id": item_id, "cached": False, "data": item}
+
+
+@app.get("/read-throuhg/{item_id}")
+async def read_through(item_id: int):
+    return {"item_id": item_id, "data": read_through_from_redis(item_id)}
